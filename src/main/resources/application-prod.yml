@@ -1,0 +1,43 @@
+spring:
+  # datasource 설정
+  # jpa 설정
+
+  data:
+    redis:
+      host: redis-live-lecture
+      port: 6379
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 16
+          min-idle: 4
+
+  rabbitmq:
+    host: moeum-rabbitmq
+    port: 5672
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 50
+        waitDurationInOpenState: 60s
+        failureRateThreshold: 50
+
+logging:
+  file:
+    name: /var/log/live-lecture/live-lecture.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30

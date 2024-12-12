@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: live-lecture-service
+  profiles:
+    active: local
+  config:
+    import: classpath:application-secret.yml
+
+server:
+  port: 8082
+
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      sla:
+        http.server.requests: 1ms,5ms,10ms,50ms,100ms,200ms,500ms,1s,5s
+
+logging:
+  level:
+    root: INFO
+    com.yourpackage.livelecture: DEBUG
