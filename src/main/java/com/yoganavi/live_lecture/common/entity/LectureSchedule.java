@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.DayOfWeek;
+import java.time.LocalTime;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,17 +27,41 @@ public class LectureSchedule {
     private LiveLectures lecture;
 
     @Column(nullable = false)
-    private LocalDate lectureDate; // 강의 날짜
-
-    @Column(nullable = false)
     private LocalDateTime startTime; // 강의 시작 시간
 
     @Column(nullable = false)
     private LocalDateTime endTime;   // 강의 종료 시간
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private DayOfWeek dayOfWeek;    // 강의 요일
+    /**
+     * 강의 날짜 반환
+     *
+     * @return 강의 날짜(시작 시간 기준)
+     */
+    public LocalDate getLectureDate() {
+        return startTime.toLocalDate();
+    }
+
+    /**
+     * 수업 날짜 반환
+     *
+     * @return 강의 요일(시작 시간 기준)
+     */
+    public DayOfWeek getDayOfWeek() {
+        return startTime.getDayOfWeek();
+    }
+
+    /**
+     * 강의 개별 스케줄 생성
+     *
+     * @return 개별 강의 스케줄
+     */
+    public static LectureSchedule createSchedule(LocalDate date, LocalTime startTime,
+        LocalTime endTime) {
+        LectureSchedule schedule = new LectureSchedule();
+        schedule.startTime = date.atTime(startTime);
+        schedule.endTime = date.atTime(endTime);
+        return schedule;
+    }
 
     /**
      * 현재 강의가 진행 중인지

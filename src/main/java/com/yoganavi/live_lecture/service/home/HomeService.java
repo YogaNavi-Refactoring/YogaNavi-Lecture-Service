@@ -1,4 +1,4 @@
-package com.yoganavi.live_lecture.service;
+package com.yoganavi.live_lecture.service.home;
 
 import com.yoganavi.live_lecture.dto.HomeResponseDto;
 import java.util.List;

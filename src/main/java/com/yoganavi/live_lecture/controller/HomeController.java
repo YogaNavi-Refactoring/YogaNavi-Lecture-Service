@@ -2,7 +2,7 @@ package com.yoganavi.live_lecture.controller;
 
 import com.yoganavi.live_lecture.dto.HomeResponseDto;
 import com.yoganavi.live_lecture.dto.SetIsOnAirDto;
-import com.yoganavi.live_lecture.service.HomeService;
+import com.yoganavi.live_lecture.service.home.HomeService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
