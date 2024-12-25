@@ -1,6 +1,6 @@
 spring:
   application:
-    name: live-lecture-service
+    name: lecture-service
   profiles:
     active: local
   config:
