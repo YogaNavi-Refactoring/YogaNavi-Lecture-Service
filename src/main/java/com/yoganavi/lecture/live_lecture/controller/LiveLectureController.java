@@ -38,32 +38,37 @@ public class LiveLectureController {
     public ResponseEntity<Map<String, Object>> createLiveLecture(
         @RequestBody LiveLectureInfoDto liveLectureInfoDto,
         @RequestHeader("X-User-Id") Long userId) {
-        liveLectureInfoDto.setUserId(userId);
+        Map<String, Object> response = new HashMap<>();
 
-        log.info("라이브 강의 생성 요청: 사용자 ID {}", userId);
-
-        String userRole = usersRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다.")).getRole();
-
-        if (!"TEACHER".equals(userRole)) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "권한이 없습니다");
-            response.put("data", new Object[]{});
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
         try {
-            liveLectureService.createLiveLecture(
-                liveLectureInfoDto);
+            liveLectureInfoDto.setUserId(userId);
+            log.info("라이브 강의 생성 요청: 사용자 ID {}", userId);
+
+            String userRole = usersRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."))
+                .getRole();
+
+            if (!"TEACHER".equals(userRole)) {
+                response.put("message", "권한이 없습니다");
+                response.put("data", new Object[]{});
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            liveLectureService.createLiveLecture(liveLectureInfoDto);
             log.info("라이브 강의 생성 완료: 사용자 ID {}", userId);
 
-            Map<String, Object> response = new HashMap<>();
             response.put("message", "화상강의 생성 성공");
             response.put("data", new Object[]{});
-
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (IllegalArgumentException e) {
+            log.error("입력값 오류: {}", e.getMessage());
+            response.put("message", e.getMessage());
+            response.put("data", new Object[]{});
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "화상강의 생성 실패");
+            log.error("라이브 강의 생성 중 오류 발생: {}", e.getMessage());
+            response.put("message", "화상강의 생성 실패: " + e.getMessage());
             response.put("data", new Object[]{});
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -90,15 +95,16 @@ public class LiveLectureController {
         }
     }
 
+
     @PutMapping("/update/{live_id}")
     public ResponseEntity<Map<String, Object>> updateLiveLecture(
         @PathVariable("live_id") Long liveId,
         @RequestBody LiveLectureInfoDto liveLectureInfoDto,
         @RequestHeader("X-User-Id") Long userId) {
         Map<String, Object> response = new HashMap<>();
-        log.info("라이브 강의 수정 요청: 강의 ID {}, 사용자 ID {}", liveId, userId);
 
         try {
+            log.info("라이브 강의 수정 요청: 강의 ID {}, 사용자 ID {}", liveId, userId);
             liveLectureInfoDto.setLiveId(liveId);
 
             if (!liveLectureService.isLectureOwner(liveId, userId)) {
@@ -113,9 +119,20 @@ public class LiveLectureController {
             response.put("message", "화상강의 수정 성공");
             response.put("data", new Object[]{});
             return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            log.error("입력값 오류: {}", e.getMessage());
+            response.put("message", e.getMessage());
+            response.put("data", new Object[]{});
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            log.error("강의 상태 오류: {}", e.getMessage());
+            response.put("message", e.getMessage());
+            response.put("data", new Object[]{});
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         } catch (Exception e) {
-            log.error("라이브 강의 수정 중 오류 발생: 강의 ID {}, 오류 메시지 {}", liveId, e.getMessage());
-            response.put("message", "강의 수정 중 오류가 발생했습니다: ");
+            log.error("라이브 강의 수정 중 오류 발생: {}", e.getMessage());
+            response.put("message", "강의 수정 중 오류가 발생했습니다: " + e.getMessage());
             response.put("data", new Object[]{});
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -160,19 +177,19 @@ public class LiveLectureController {
         @PathVariable("live_id") Long liveId,
         @RequestHeader("X-User-Id") Long userId) {
         Map<String, Object> response = new HashMap<>();
-        log.info("라이브 강의 삭제 요청: 강의 ID {}, 사용자 ID {}", liveId, userId);
 
         try {
-            LiveLectureResponseDto lecture = liveLectureService.getLiveLectureById(liveId);
+            log.info("라이브 강의 삭제 요청: 강의 ID {}, 사용자 ID {}", liveId, userId);
 
+            LiveLectureResponseDto lecture = liveLectureService.getLiveLectureById(liveId);
             if (lecture == null) {
-                response.put("message", "강의 없음");
+                response.put("message", "강의가 존재하지 않습니다");
                 response.put("data", new Object[]{});
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
             if (!liveLectureService.isLectureOwner(liveId, userId)) {
-                response.put("message", "권한이 없습니다");
+                response.put("message", "삭제 권한이 없습니다");
                 response.put("data", new Object[]{});
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
@@ -183,8 +200,19 @@ public class LiveLectureController {
             response.put("message", "강의 삭제 성공");
             response.put("data", new Object[]{});
             return ResponseEntity.ok(response);
+
+        } catch (IllegalStateException e) {
+            log.error("강의 상태 오류: {}", e.getMessage());
+            response.put("message", e.getMessage());
+            response.put("data", new Object[]{});
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        } catch (IllegalArgumentException e) {
+            log.error("입력값 오류: {}", e.getMessage());
+            response.put("message", e.getMessage());
+            response.put("data", new Object[]{});
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
-            log.error("라이브 강의 삭제 중 오류 발생: 강의 ID {}, 오류 메시지 {}", liveId, e.getMessage());
+            log.error("라이브 강의 삭제 중 오류 발생: {}", e.getMessage());
             response.put("message", "강의 삭제 중 오류가 발생했습니다: " + e.getMessage());
             response.put("data", new Object[]{});
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);

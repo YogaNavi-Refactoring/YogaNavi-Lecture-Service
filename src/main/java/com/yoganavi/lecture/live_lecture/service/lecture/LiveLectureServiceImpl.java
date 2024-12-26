@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -46,11 +47,12 @@ public class LiveLectureServiceImpl implements LiveLectureService {
         log.info("라이브 강의 생성 시작: 사용자 ID {}", dto.getUserId());
 
         if (dto.getUserId() == 0) {
+            log.error("사용자 ID는 0일 수 없습니다");
             throw new IllegalArgumentException("사용자 ID는 0일 수 없습니다");
         }
 
-        Users user = userRepository.findById(dto.getUserId())
-            .orElseThrow(IllegalArgumentException::new);
+        Users user = userRepository.findById(dto.getUserId()).orElseThrow(
+            () -> new IllegalArgumentException("사용자" + dto.getUserId() + "를 찾을 수 없습니다."));
 
         LiveLectures liveLecture = new LiveLectures();
         liveLecture.setLiveTitle(dto.getLiveTitle());
@@ -59,6 +61,9 @@ public class LiveLectureServiceImpl implements LiveLectureService {
         liveLecture.setRegDate(LocalDateTime.now());
         liveLecture.setUser(user);
         liveLecture.setIsOnAir(false);
+
+        validateScheduleUpdate(dto);
+        validateAvailableDay(dto.getAvailableDay());
 
         LocalDate startDate = timeUtil.toLocalDate(dto.getStartDate());
         LocalDate endDate = timeUtil.toLocalDate(dto.getEndDate());
@@ -112,31 +117,21 @@ public class LiveLectureServiceImpl implements LiveLectureService {
         return schedules;
     }
 
-    private Set<DayOfWeek> parseAvailableDays(String availableDays) {
-        Set<DayOfWeek> daySet = new HashSet<>();
-        String[] days = availableDays.split(",");
-
-        for (String day : days) {
-            String trimmedDay = day.trim();
-            DayOfWeek dayOfWeek = DayOfWeek.valueOf(trimmedDay.toUpperCase());
-            daySet.add(dayOfWeek);
-        }
-
-        return daySet;
-    }
-
     @Override
     @Transactional(readOnly = true)
     public List<LiveLectureResponseDto> getLiveLecturesByUserId(Long userId) {
         log.info("사용자의 라이브 강의 목록 조회 시작: 사용자 ID {}", userId);
-
-        List<LiveLectures> lectures = liveLecturesRepository.findByUserId(userId);
         List<LiveLectureResponseDto> responseDtos = new ArrayList<>();
 
-        for (LiveLectures lecture : lectures) {
-            responseDtos.add(convertToDto(lecture));
-        }
+        try {
+            List<LiveLectures> lectures = liveLecturesRepository.findByUserId(userId);
 
+            for (LiveLectures lecture : lectures) {
+                responseDtos.add(convertToDto(lecture));
+            }
+        } catch (Exception e) {
+            log.error("사용자의 라이브 강의 목록 조회 실패: 사용자 ID {}", userId);
+        }
         log.info("사용자의 라이브 강의 목록 조회 완료: 사용자 ID {}, 조회된 강의 수 {}",
             userId, responseDtos.size());
 
@@ -146,7 +141,13 @@ public class LiveLectureServiceImpl implements LiveLectureService {
     @Override
     @Transactional(readOnly = true)
     public boolean isLectureOwner(Long liveId, Long userId) {
-        Optional<LiveLectures> lectureOpt = liveLecturesRepository.findById(liveId);
+        Optional<LiveLectures> lectureOpt = Optional.empty();
+        try {
+            log.info("사용자 ID {}에 대한 강의 ID {}의 강사 여부 판별", userId, liveId);
+            lectureOpt = liveLecturesRepository.findById(liveId);
+        } catch (Exception e) {
+            log.error("사용자 ID {}에 대한 강의 ID {}의 강사 여부 판별 실패", userId, liveId);
+        }
         return lectureOpt.filter(lecture ->
                 Objects.equals(lecture.getUser().getUserId(), userId))
             .isPresent();
@@ -158,11 +159,37 @@ public class LiveLectureServiceImpl implements LiveLectureService {
         log.info("라이브 강의 수정 시작: 강의 ID {}", liveLectureInfoDto.getLiveId());
 
         LiveLectures lecture = liveLecturesRepository.findById(liveLectureInfoDto.getLiveId())
-            .orElseThrow(() -> new IllegalArgumentException("Invalid lecture ID"));
+            .orElseThrow(() -> new IllegalArgumentException(
+                "강의를 찾을 수 없습니다: " + liveLectureInfoDto.getLiveId()));
+
+        if (lecture.getIsDeleted()) {
+            log.error("이미 삭제된 강의는 수정할 수 없습니다");
+            throw new IllegalStateException("이미 삭제된 강의는 수정할 수 없습니다");
+        }
+
+        if (lecture.getIsOnAir()) {
+            log.error("진행 중인 강의는 수정할 수 없습니다");
+            throw new IllegalStateException("진행 중인 강의는 수정할 수 없습니다");
+        }
+
+        if (liveLectureInfoDto.getLiveTitle() != null && liveLectureInfoDto.getLiveTitle().trim()
+            .isEmpty()) {
+            log.error("강의 제목은 비워둘 수 없습니다");
+            throw new IllegalArgumentException("강의 제목은 비워둘 수 없습니다");
+        }
+
+        if (liveLectureInfoDto.getMaxLiveNum() != null && liveLectureInfoDto.getMaxLiveNum() <= 0) {
+            log.error("최대 수강 인원은 1명 이상이어야 합니다");
+            throw new IllegalArgumentException("최대 수강 인원은 1명 이상이어야 합니다");
+        }
 
         updateBasicLectureInfo(lecture, liveLectureInfoDto);
 
         if (isScheduleUpdateRequired(liveLectureInfoDto)) {
+            validateScheduleUpdate(liveLectureInfoDto);
+            if (liveLectureInfoDto.getAvailableDay() != null) {
+                validateAvailableDay(liveLectureInfoDto.getAvailableDay());
+            }
             updateLectureSchedules(lecture, liveLectureInfoDto);
         }
 
@@ -173,16 +200,23 @@ public class LiveLectureServiceImpl implements LiveLectureService {
 //        notificationService.sendLectureUpdateNotification(updatedLecture);
     }
 
+    private void validateScheduleUpdate(LiveLectureInfoDto dto) {
+        LocalDate startDate = timeUtil.toLocalDate(dto.getStartDate());
+        LocalDate endDate = timeUtil.toLocalDate(dto.getEndDate());
+        LocalTime startTime = timeUtil.toLocalTime(dto.getStartTime());
+        LocalTime endTime = timeUtil.toLocalTime(dto.getEndTime());
 
-    private void updateBasicLectureInfo(LiveLectures lecture, LiveLectureInfoDto dto) {
-        if (dto.getLiveTitle() != null) {
-            lecture.setLiveTitle(dto.getLiveTitle());
+        if (startDate != null && endDate != null) {
+            if (startDate.isAfter(endDate)) {
+                throw new IllegalArgumentException("종료일이 시작일보다 빠를 수 없습니다");
+            }
+            if (startDate.isBefore(LocalDate.now())) {
+                throw new IllegalArgumentException("시작일은 오늘 이후여야 합니다");
+            }
         }
-        if (dto.getLiveContent() != null) {
-            lecture.setLiveContent(dto.getLiveContent());
-        }
-        if (dto.getMaxLiveNum() != null) {
-            lecture.setMaxLiveNum(dto.getMaxLiveNum());
+
+        if (startTime != null && endTime != null && startTime.isAfter(endTime)) {
+            throw new IllegalArgumentException("종료 시간이 시작 시간보다 빠를 수 없습니다");
         }
     }
 
@@ -251,7 +285,7 @@ public class LiveLectureServiceImpl implements LiveLectureService {
 
     public void redistributeStudents(Map<LectureSchedule, List<MyLiveLecture>> scheduleEnrollments,
         List<LectureSchedule> newSchedules) {
-        for (Map.Entry<LectureSchedule, List<MyLiveLecture>> entry : scheduleEnrollments.entrySet()) {
+        for (Entry<LectureSchedule, List<MyLiveLecture>> entry : scheduleEnrollments.entrySet()) {
             LectureSchedule oldSchedule = entry.getKey();
             List<MyLiveLecture> students = entry.getValue();
 
@@ -281,37 +315,29 @@ public class LiveLectureServiceImpl implements LiveLectureService {
             return new HashSet<>();
         }
 
+        Map<String, DayOfWeek> dayCodeMap = Map.of(
+            "MON", DayOfWeek.MONDAY,
+            "TUE", DayOfWeek.TUESDAY,
+            "WED", DayOfWeek.WEDNESDAY,
+            "THU", DayOfWeek.THURSDAY,
+            "FRI", DayOfWeek.FRIDAY,
+            "SAT", DayOfWeek.SATURDAY,
+            "SUN", DayOfWeek.SUNDAY
+        );
+
         Set<DayOfWeek> availableDays = new HashSet<>();
         String[] dayCodes = dayCodesStr.split(",");
 
         for (String dayCode : dayCodes) {
             String trimmedDayCode = dayCode.trim();
-            switch (trimmedDayCode) {
-                case "MON":
-                    availableDays.add(DayOfWeek.MONDAY);
-                    break;
-                case "TUE":
-                    availableDays.add(DayOfWeek.TUESDAY);
-                    break;
-                case "WED":
-                    availableDays.add(DayOfWeek.WEDNESDAY);
-                    break;
-                case "THU":
-                    availableDays.add(DayOfWeek.THURSDAY);
-                    break;
-                case "FRI":
-                    availableDays.add(DayOfWeek.FRIDAY);
-                    break;
-                case "SAT":
-                    availableDays.add(DayOfWeek.SATURDAY);
-                    break;
-                case "SUN":
-                    availableDays.add(DayOfWeek.SUNDAY);
-                    break;
-                default:
-                    log.warn("잘못된 요일 코드: {}", trimmedDayCode);
+            DayOfWeek dayOfWeek = dayCodeMap.get(trimmedDayCode);
+            if (dayOfWeek == null) {
+                log.warn("잘못된 요일 코드: {}", trimmedDayCode);
+                throw new IllegalArgumentException("잘못된 요일 코드입니다: " + trimmedDayCode);
             }
+            availableDays.add(dayOfWeek);
         }
+
         return availableDays;
     }
 
@@ -443,6 +469,42 @@ public class LiveLectureServiceImpl implements LiveLectureService {
         dto.setAvailableDay(lecture.getAvailableDay());
 
         return dto;
+    }
+
+    private void validateAvailableDay(String availableDays) {
+        if (availableDays == null || availableDays.trim().isEmpty()) {
+            throw new IllegalArgumentException("강의 요일을 선택해야 합니다");
+        }
+
+        Map<String, DayOfWeek> dayCodeMap = Map.of(
+            "MON", DayOfWeek.MONDAY,
+            "TUE", DayOfWeek.TUESDAY,
+            "WED", DayOfWeek.WEDNESDAY,
+            "THU", DayOfWeek.THURSDAY,
+            "FRI", DayOfWeek.FRIDAY,
+            "SAT", DayOfWeek.SATURDAY,
+            "SUN", DayOfWeek.SUNDAY
+        );
+
+        String[] days = availableDays.split(",");
+        for (String day : days) {
+            String trimmedDay = day.trim();
+            if (!dayCodeMap.containsKey(trimmedDay)) {
+                throw new IllegalArgumentException("잘못된 요일 코드입니다: " + trimmedDay);
+            }
+        }
+    }
+
+    private void updateBasicLectureInfo(LiveLectures lecture, LiveLectureInfoDto dto) {
+        if (dto.getLiveTitle() != null) {
+            lecture.setLiveTitle(dto.getLiveTitle());
+        }
+        if (dto.getLiveContent() != null) {
+            lecture.setLiveContent(dto.getLiveContent());
+        }
+        if (dto.getMaxLiveNum() != null) {
+            lecture.setMaxLiveNum(dto.getMaxLiveNum());
+        }
     }
 
 }
