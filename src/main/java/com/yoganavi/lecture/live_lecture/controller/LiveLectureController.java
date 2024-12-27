@@ -2,7 +2,7 @@ package com.yoganavi.lecture.live_lecture.controller;
 
 import com.yoganavi.lecture.live_lecture.dto.LiveLectureInfoDto;
 import com.yoganavi.lecture.live_lecture.dto.LiveLectureResponseDto;
-import com.yoganavi.lecture.live_lecture.repository.UserRepository;
+import com.yoganavi.lecture.common.repository.UserRepository;
 import com.yoganavi.lecture.live_lecture.service.lecture.LiveLectureService;
 import java.util.HashMap;
 import java.util.List;

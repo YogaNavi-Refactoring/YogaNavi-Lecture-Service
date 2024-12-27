@@ -11,10 +11,10 @@ import com.yoganavi.lecture.common.entity.LiveLectures;
 import com.yoganavi.lecture.common.entity.MyLiveLecture;
 import com.yoganavi.lecture.common.entity.Users;
 import com.yoganavi.lecture.live_lecture.dto.HomeResponseDto;
-import com.yoganavi.lecture.live_lecture.repository.LectureScheduleRepository;
-import com.yoganavi.lecture.live_lecture.repository.LiveLecturesRepository;
-import com.yoganavi.lecture.live_lecture.repository.MyLiveLectureRepository;
-import com.yoganavi.lecture.live_lecture.repository.UserRepository;
+import com.yoganavi.lecture.common.repository.LectureScheduleRepository;
+import com.yoganavi.lecture.common.repository.LiveLecturesRepository;
+import com.yoganavi.lecture.common.repository.MyLiveLectureRepository;
+import com.yoganavi.lecture.common.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -81,7 +81,7 @@ class HomeServiceIntegrationTest {
 
         // 학생 수강신청
         MyLiveLecture myLecture = new MyLiveLecture();
-        myLecture.setUserId(student.getUserId());
+        myLecture.setUser(student);
         myLecture.setLectureSchedule(schedules.get(0));
         myLecture.setCompleted(false);
         myLiveLectureRepository.save(myLecture);
@@ -240,7 +240,7 @@ class HomeServiceIntegrationTest {
 
         // 김강사가 박강사의 강의를 수강신청
         MyLiveLecture teacherAsStudent = new MyLiveLecture();
-        teacherAsStudent.setUserId(1L);  // 김강사
+        teacherAsStudent.setUser(userRepository.findById(1L).get());  // 김강사
         teacherAsStudent.setLectureSchedule(anotherSchedules.get(0));
         teacherAsStudent.setCompleted(false);
         myLiveLectureRepository.save(teacherAsStudent);
@@ -299,7 +299,7 @@ class HomeServiceIntegrationTest {
 
         // 학생이 요가 강의도 수강신청
         MyLiveLecture anotherEnrollment = new MyLiveLecture();
-        anotherEnrollment.setUserId(2L);  // 이학생
+        anotherEnrollment.setUser(userRepository.findById(2L).get());  // 이학생
         anotherEnrollment.setLectureSchedule(yogaSchedules.get(0));
         anotherEnrollment.setCompleted(false);
         myLiveLectureRepository.save(anotherEnrollment);

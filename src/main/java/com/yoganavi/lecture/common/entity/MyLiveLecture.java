@@ -24,8 +24,9 @@ public class MyLiveLecture {
     @JoinColumn(name = "schedule_id", nullable = false)
     private LectureSchedule lectureSchedule;
 
-    @Column(nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "userId", nullable = false)
+    private Users user;
 
     @Column(nullable = false)
     private boolean completed = false;
