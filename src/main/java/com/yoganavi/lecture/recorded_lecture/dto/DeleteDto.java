@@ -1,0 +1,14 @@
+package com.yoganavi.lecture.recorded_lecture.dto;
+
+import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+@Getter
+@Setter
+@ToString
+public class DeleteDto {
+
+    private List<Long> lectureIds;
+}

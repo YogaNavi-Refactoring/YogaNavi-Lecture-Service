@@ -22,9 +22,9 @@ import com.yoganavi.lecture.common.entity.LiveLectures;
 import com.yoganavi.lecture.common.entity.MyLiveLecture;
 import com.yoganavi.lecture.common.entity.Users;
 
-import com.yoganavi.lecture.live_lecture.repository.LiveLecturesRepository;
-import com.yoganavi.lecture.live_lecture.repository.MyLiveLectureRepository;
-import com.yoganavi.lecture.live_lecture.repository.UserRepository;
+import com.yoganavi.lecture.common.repository.LiveLecturesRepository;
+import com.yoganavi.lecture.common.repository.MyLiveLectureRepository;
+import com.yoganavi.lecture.common.repository.UserRepository;
 
 import com.yoganavi.lecture.live_lecture.dto.LiveLectureInfoDto;
 import com.yoganavi.lecture.live_lecture.dto.LiveLectureResponseDto;
@@ -273,7 +273,7 @@ class LiveLectureServiceTest {
             void 수강생_근접시간_재배치() {
                 // given
                 MyLiveLecture enrollment = new MyLiveLecture();
-                enrollment.setUserId(2L);
+                enrollment.setUser(userRepository.findById(2L).get());
                 enrollment.setLectureSchedule(testSchedule);
 
                 LectureSchedule newSchedule = new LectureSchedule();

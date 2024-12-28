@@ -1,9 +1,9 @@
 package com.yoganavi.lecture.live_lecture.service.home;
 
 import com.yoganavi.lecture.live_lecture.dto.HomeResponseDto;
-import com.yoganavi.lecture.live_lecture.repository.LiveLecturesRepository;
-import com.yoganavi.lecture.live_lecture.repository.MyLiveLectureRepository;
-import com.yoganavi.lecture.live_lecture.repository.UserRepository;
+import com.yoganavi.lecture.common.repository.LiveLecturesRepository;
+import com.yoganavi.lecture.common.repository.MyLiveLectureRepository;
+import com.yoganavi.lecture.common.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;

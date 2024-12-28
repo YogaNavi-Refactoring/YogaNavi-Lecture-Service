@@ -1,4 +1,4 @@
-package com.yoganavi.lecture.live_lecture.repository;
+package com.yoganavi.lecture.common.repository;
 
 import com.yoganavi.lecture.common.entity.LiveLectures;
 import com.yoganavi.lecture.live_lecture.dto.HomeResponseDto;
@@ -37,7 +37,7 @@ public interface LiveLecturesRepository extends JpaRepository<LiveLectures, Long
               OR EXISTS (
                   SELECT 1 FROM MyLiveLecture ml 
                   WHERE ml.lectureSchedule.lecture = l 
-                  AND ml.userId = :userId 
+                  AND ml.user.userId = :userId 
                   AND ml.completed = false
               ))
         AND s.endTime > :now
@@ -66,7 +66,7 @@ public interface LiveLecturesRepository extends JpaRepository<LiveLectures, Long
               OR EXISTS (
                   SELECT 1 FROM MyLiveLecture ml 
                   WHERE ml.lectureSchedule.lecture = l 
-                  AND ml.userId = :userId 
+                  AND ml.user.userId = :userId 
                   AND ml.completed = true  
               ))
         AND s.endTime <= :now

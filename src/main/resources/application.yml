@@ -12,6 +12,15 @@ spring:
       hibernate:
         jdbc:
           time_zone: Asia/Seoul
+  elasticsearch:
+    uris: http://localhost:9200
+    connection-timeout: 1s
+    socket-timeout: 1s
+
+  data:
+    elasticsearch:
+      repositories:
+        enabled: true
 
 server:
   port: 8082

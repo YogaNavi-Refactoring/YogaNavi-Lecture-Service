@@ -11,10 +11,10 @@ import com.yoganavi.lecture.common.entity.LiveLectures;
 import com.yoganavi.lecture.common.entity.MyLiveLecture;
 import com.yoganavi.lecture.common.entity.Users;
 import com.yoganavi.lecture.live_lecture.dto.LectureHistoryDto;
-import com.yoganavi.lecture.live_lecture.repository.LectureScheduleRepository;
-import com.yoganavi.lecture.live_lecture.repository.LiveLecturesRepository;
-import com.yoganavi.lecture.live_lecture.repository.MyLiveLectureRepository;
-import com.yoganavi.lecture.live_lecture.repository.UserRepository;
+import com.yoganavi.lecture.common.repository.LectureScheduleRepository;
+import com.yoganavi.lecture.common.repository.LiveLecturesRepository;
+import com.yoganavi.lecture.common.repository.MyLiveLectureRepository;
+import com.yoganavi.lecture.common.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -77,7 +77,7 @@ class HistoryServiceIntegrationTest {
         // 모든 강의를 수강 완료 상태로 설정
         schedules.forEach(schedule -> {
             MyLiveLecture myLecture = new MyLiveLecture();
-            myLecture.setUserId(student.getUserId());
+            myLecture.setUser(student);
             myLecture.setLectureSchedule(schedule);
             myLecture.setCompleted(true);  // 수강 완료로 설정
             myLiveLectureRepository.save(myLecture);

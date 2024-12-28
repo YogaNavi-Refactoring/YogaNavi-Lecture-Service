@@ -7,15 +7,13 @@ import com.yoganavi.lecture.common.entity.Users;
 import com.yoganavi.lecture.common.util.TimeUtil;
 import com.yoganavi.lecture.live_lecture.dto.LiveLectureInfoDto;
 import com.yoganavi.lecture.live_lecture.dto.LiveLectureResponseDto;
-import com.yoganavi.lecture.live_lecture.repository.LiveLecturesRepository;
-import com.yoganavi.lecture.live_lecture.repository.MyLiveLectureRepository;
-import com.yoganavi.lecture.live_lecture.repository.UserRepository;
+import com.yoganavi.lecture.common.repository.LiveLecturesRepository;
+import com.yoganavi.lecture.common.repository.MyLiveLectureRepository;
+import com.yoganavi.lecture.common.repository.UserRepository;
 import java.time.DayOfWeek;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -295,7 +293,7 @@ public class LiveLectureServiceImpl implements LiveLectureService {
             for (MyLiveLecture enrollment : students) {
                 MyLiveLecture newEnrollment = new MyLiveLecture();
                 newEnrollment.setLectureSchedule(closestSchedule);
-                newEnrollment.setUserId(enrollment.getUserId());
+                newEnrollment.setUser(enrollment.getUser());
                 newEnrollment.setCompleted(false);
 
                 myLiveLectureRepository.save(newEnrollment);
