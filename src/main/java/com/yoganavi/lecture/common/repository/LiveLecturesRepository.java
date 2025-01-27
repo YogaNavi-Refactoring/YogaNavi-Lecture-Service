@@ -3,6 +3,7 @@ package com.yoganavi.lecture.common.repository;
 import com.yoganavi.lecture.common.entity.LiveLectures;
 import com.yoganavi.lecture.live_lecture.dto.HomeResponseDto;
 import com.yoganavi.lecture.live_lecture.dto.LectureHistoryDto;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -86,4 +87,15 @@ public interface LiveLecturesRepository extends JpaRepository<LiveLectures, Long
         "LEFT JOIN FETCH l.schedules " +
         "WHERE l.liveId = :liveId AND l.isDeleted = false")
     Optional<LiveLectures> findByIdWithUserAndSchedules(@Param("liveId") Long liveId);
+
+
+    @Query("SELECT DISTINCT ll FROM LiveLectures ll " +
+        "LEFT JOIN FETCH ll.schedules s " +
+        "LEFT JOIN FETCH ll.user " +
+        "WHERE ll.isDeleted = false " +
+        "AND ll.maxLiveNum = CASE WHEN :method = 0 THEN 1 ELSE ll.maxLiveNum END " +
+        "AND ll.maxLiveNum > CASE WHEN :method = 1 THEN 1 ELSE 0 END " +
+        "AND EXISTS (SELECT 1 FROM ll.schedules sch WHERE sch.startTime > :currentDate)")
+    List<LiveLectures> findAvailableLectures(@Param("method") int method,
+        @Param("currentDate") LocalDateTime currentDate);
 }

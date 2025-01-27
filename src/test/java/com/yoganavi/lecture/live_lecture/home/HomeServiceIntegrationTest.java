@@ -1,4 +1,4 @@
-package com.yoganavi.lecture.service.home;
+package com.yoganavi.lecture.live_lecture.home;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -101,7 +101,6 @@ class HomeServiceIntegrationTest {
         user.setNickname(nickname);
         user.setProfileImageUrl("http://test.com/" + nickname + ".jpg");
         user.setProfileImageUrlSmall("http://test.com/" + nickname + "_small.jpg");
-        user.setIsActive(true);
         return user;
     }
 

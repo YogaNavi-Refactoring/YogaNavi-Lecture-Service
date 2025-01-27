@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @Table(name = "my_live_lectures",
     uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"userId", "schedule_id"})
+        @UniqueConstraint(columnNames = {"user_id", "schedule_id"})
     })
 public class MyLiveLecture {
 
@@ -25,7 +25,7 @@ public class MyLiveLecture {
     private LectureSchedule lectureSchedule;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId", nullable = false)
+    @JoinColumn(name = "user_Id", nullable = false)
     private Users user;
 
     @Column(nullable = false)

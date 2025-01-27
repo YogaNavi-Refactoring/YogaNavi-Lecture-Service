@@ -17,4 +17,6 @@ public interface RecordedLectureLikeRepository extends JpaRepository<RecordedLec
     boolean existsByLectureAndUser(RecordedLecture lecture, Users user);
 
     void deleteByLectureAndUser(RecordedLecture lecture, Users user);
+
+    int countByLecture(RecordedLecture lecture);
 }
