@@ -1,4 +1,4 @@
-package com.yoganavi.lecture.service.lecture;
+package com.yoganavi.lecture.live_lecture.lecture;
 
 import com.yoganavi.lecture.live_lecture.service.lecture.LiveLectureServiceImpl;
 import org.junit.jupiter.api.BeforeEach;

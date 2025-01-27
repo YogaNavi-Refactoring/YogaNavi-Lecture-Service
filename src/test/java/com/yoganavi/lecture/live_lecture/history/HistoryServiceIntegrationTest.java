@@ -1,4 +1,4 @@
-package com.yoganavi.lecture.service.history;
+package com.yoganavi.lecture.live_lecture.history;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -90,7 +90,6 @@ class HistoryServiceIntegrationTest {
         user.setNickname(nickname);
         user.setProfileImageUrl("http://test.com/" + nickname + ".jpg");
         user.setProfileImageUrlSmall("http://test.com/" + nickname + "_small.jpg");
-        user.setIsActive(true);
         return user;
     }
 

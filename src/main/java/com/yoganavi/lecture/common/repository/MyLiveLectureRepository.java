@@ -2,6 +2,7 @@ package com.yoganavi.lecture.common.repository;
 
 import com.yoganavi.lecture.common.entity.LectureSchedule;
 import com.yoganavi.lecture.common.entity.MyLiveLecture;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -41,7 +42,8 @@ public interface MyLiveLectureRepository extends JpaRepository<MyLiveLecture, Lo
         "JOIN ml.lectureSchedule ls " +
         "JOIN ls.lecture l " +
         "WHERE l.liveId = :liveId " +
-        "AND ml.completed = false")
+        "AND ml.completed = false " +
+        "AND ls.endTime > :currentDate")
     List<MyLiveLecture> findActiveLecturesByLiveId(@Param("liveId") Long liveId);
 
     // 강의 id로 수강생 수 카운트
@@ -50,4 +52,13 @@ public interface MyLiveLectureRepository extends JpaRepository<MyLiveLecture, Lo
         "JOIN ls.lecture l " +
         "WHERE l.liveId = :liveId")
     long countByLiveLectureId(@Param("liveId") Long liveId);
+
+    @Query("SELECT ml FROM MyLiveLecture ml " +
+        "WHERE ml.user.userId = :userId " +
+        "AND ml.lectureSchedule.startTime BETWEEN :startTime AND :endTime " +
+        "AND ml.completed = false")
+    List<MyLiveLecture> findOverlappingLectures(
+        @Param("userId") Long userId,
+        @Param("startTime") LocalDateTime startTime,
+        @Param("endTime") LocalDateTime endTime);
 }
