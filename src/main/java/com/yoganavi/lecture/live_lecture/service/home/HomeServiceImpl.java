@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class HomeServiceImpl implements HomeService {
 
     private final LiveLecturesRepository liveLecturesRepository;
-    private final MyLiveLectureRepository myLiveLectureRepository;
     private final UserRepository userRepository;
 
     /**
@@ -30,7 +29,6 @@ public class HomeServiceImpl implements HomeService {
     @Override
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public List<HomeResponseDto> getHomeData(Long userId, int page, int size) {
-        log.info("사용자: {}의 홈 화면 데이터 조회, page: {}, size: {}", userId, page, size);
 
         try {
             if (!userRepository.existsById(userId)) {

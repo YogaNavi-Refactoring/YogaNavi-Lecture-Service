@@ -1,9 +1,7 @@
 package com.yoganavi.lecture.common.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -20,14 +18,13 @@ import lombok.Setter;
 public class Users {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
     @Column(name = "user_id", unique = true)
     private Long userId;
 
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 30)
     private String nickname;
 
     @Column(length = 512)
